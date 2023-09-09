@@ -10,6 +10,7 @@ import (
 	"github.com/puerco/deployer/pkg/payload"
 	"github.com/sirupsen/logrus"
 
+	"github.com/bom-squad/protobom/pkg/reader"
 	"github.com/bom-squad/protobom/pkg/sbom"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/openvex/go-vex/pkg/vex"
@@ -116,4 +117,16 @@ func (dvi *defaultVexiImplementation) DownloadSBOM(opts Options, imageRef string
 	logrus.Infof("Downloaded %d SBOMs from image %s", len(docs), imageRef)
 
 	return docs, nil
+}
+
+// ParseSBOM takes a document discovered by deployer, detects the format and
+// returns a protobom with the parsed data.
+func (dvi *defaultVexiImplementation) ParseSBOM(payloadDoc *payload.Document) (*sbom.Document, error) {
+	r := reader.New()
+	bom, err := r.ParseStream(payloadDoc)
+	if err != nil {
+		return nil, fmt.Errorf("parsing SBOM: %w", err)
+	}
+
+	return bom, nil
 }
