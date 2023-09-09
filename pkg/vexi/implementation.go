@@ -146,11 +146,21 @@ func (dvi *defaultVexiImplementation) FilterSBOMPackages(bom *sbom.Document) (*s
 	// Remove the nodes
 	nodelist.RemoveNodes(list)
 
+	logrus.Infof("found %d wolfi packages in SBOM", len(nodelist.Nodes))
+
 	// Return the nodelist
 	return nodelist, nil
 }
 
-func (dvi *defaultVexiImplementation) FindPackageAdvisories(*sbom.NodeList) (AdvisoryList, error)
-func (dvi *defaultVexiImplementation) GenerateVEXData(AdvisoryList) ([]*vex.VEX, error)
-func (dvi *defaultVexiImplementation) MergeDocuments([]*vex.VEX) (*vex.VEX, error)
-func (dvi *defaultVexiImplementation) WriteVexDocument(*vex.VEX) error
+func (dvi *defaultVexiImplementation) FindPackageAdvisories(*sbom.NodeList) (AdvisoryList, error) {
+	return nil, nil
+}
+func (dvi *defaultVexiImplementation) GenerateVEXData(AdvisoryList) ([]*vex.VEX, error) {
+	return nil, nil
+}
+func (dvi *defaultVexiImplementation) MergeDocuments([]*vex.VEX) (*vex.VEX, error) {
+	return nil, nil
+}
+func (dvi *defaultVexiImplementation) WriteVexDocument(*vex.VEX) error {
+	return nil
+}

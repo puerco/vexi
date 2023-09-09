@@ -26,7 +26,7 @@ type Options struct {
 type PackageList []string
 type AdvisoryList map[string]string
 
-func (gen *Generator) GenerateImageVEX(imageRef string) error {
+func (gen *Generator) ImageVEX(imageRef string) error {
 	sboms, err := gen.impl.DownloadSBOM(gen.opts, imageRef)
 	if err != nil {
 		return fmt.Errorf("downloading image SBOM: %w", err)
