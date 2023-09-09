@@ -8,7 +8,9 @@ import (
 	purl "github.com/package-url/packageurl-go"
 	"github.com/puerco/deployer/pkg/deploy"
 	"github.com/puerco/deployer/pkg/payload"
+	"github.com/puerco/vexi/pkg/vexi/options"
 	"github.com/sirupsen/logrus"
+	"sigs.k8s.io/release-sdk/git"
 
 	"github.com/bom-squad/protobom/pkg/reader"
 	"github.com/bom-squad/protobom/pkg/sbom"
@@ -17,7 +19,9 @@ import (
 )
 
 type generatorImplementation interface {
-	DownloadSBOM(Options, string) ([]*payload.Document, error)
+	ValidateOptions(*options.Options) error
+	CloneAdvisoryRepo(options.Options) error
+	DownloadSBOM(options.Options, string) ([]*payload.Document, error)
 	ParseSBOM(*payload.Document) (*sbom.Document, error)
 	FilterSBOMPackages(*sbom.Document) (*sbom.NodeList, error)
 	FindPackageAdvisories(*sbom.NodeList) (AdvisoryList, error)
@@ -93,8 +97,23 @@ func purlFromRef(imageRef string) (string, error) {
 	return purlString, nil
 }
 
+// ValidateOptions calls the options validation function.
+func (dvi *defaultVexiImplementation) ValidateOptions(opts *options.Options) error {
+	return opts.Validate()
+}
+
+// CloneAdvisoryRepo clones the advisories repository
+func CloneAdvisoryRepo(opts options.Options) error {
+	if _, err := git.CloneOrOpenGitHubRepo(
+		opts.AdvisoriesDir, opts.RepoOrg, opts.RepoName, false,
+	); err != nil {
+		return fmt.Errorf("cloning repository: %w", err)
+	}
+	return nil
+}
+
 // DownloadSBOM retrieves all the SBOMs associated with the image.
-func (dvi *defaultVexiImplementation) DownloadSBOM(opts Options, imageRef string) ([]*payload.Document, error) {
+func (dvi *defaultVexiImplementation) DownloadSBOM(opts options.Options, imageRef string) ([]*payload.Document, error) {
 	// Use the mighty deployer to drop any SBOMs from the image to vexi
 	probe := deploy.NewProbe()
 

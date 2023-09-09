@@ -3,31 +3,39 @@ package vexi
 import (
 	"fmt"
 
+	"github.com/puerco/vexi/pkg/vexi/options"
 	"github.com/sirupsen/logrus"
 )
 
 type Generator struct {
-	impl generatorImplementation
-	opts Options
+	impl    generatorImplementation
+	Options options.Options
 }
 
 func NewGenerator() *Generator {
 	return &Generator{
-		impl: &defaultVexiImplementation{},
-		opts: Options{},
+		impl:    &defaultVexiImplementation{},
+		Options: options.Options{},
 	}
-}
-
-type Options struct {
-	Platform           string
-	PredicateTypesList string
 }
 
 type PackageList []string
 type AdvisoryList map[string]string
 
 func (gen *Generator) ImageVEX(imageRef string) error {
-	sboms, err := gen.impl.DownloadSBOM(gen.opts, imageRef)
+	if err := gen.impl.ValidateOptions(&gen.Options); err != nil {
+		return fmt.Errorf("invalid options: %w", err)
+	}
+
+	// Of we are working on a temporary directory, it needs to be cloned
+	if gen.Options.IsTempDir {
+		logrus.Info("cloning advisory data...")
+		if err := gen.impl.CloneAdvisoryRepo(gen.Options); err != nil {
+			return fmt.Errorf("cloning advisory data: %w", err)
+		}
+	}
+
+	sboms, err := gen.impl.DownloadSBOM(gen.Options, imageRef)
 	if err != nil {
 		return fmt.Errorf("downloading image SBOM: %w", err)
 	}
