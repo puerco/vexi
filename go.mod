@@ -3,7 +3,7 @@ module github.com/puerco/vexi
 go 1.20
 
 require (
-	github.com/bom-squad/protobom v0.1.0
+	github.com/bom-squad/protobom v0.1.1-0.20230810004809-4bf25166a362
 	github.com/google/go-containerregistry v0.16.1
 	github.com/openvex/go-vex v0.2.5
 	github.com/package-url/packageurl-go v0.1.1
@@ -14,6 +14,7 @@ require (
 
 require (
 	github.com/CycloneDX/cyclonedx-go v0.7.1 // indirect
+	github.com/anchore/go-struct-converter v0.0.0-20221118182256-c68fdcfa2092 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
@@ -46,6 +47,7 @@ require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/certificate-transparency-go v1.1.6 // indirect
+	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/in-toto/in-toto-golang v0.9.0 // indirect
@@ -68,7 +70,6 @@ require (
 	github.com/pelletier/go-toml/v2 v2.0.8 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/rogpeppe/go-internal v1.10.0 // indirect
 	github.com/sassoftware/relic v7.2.1+incompatible // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.7.0 // indirect
 	github.com/shibumi/go-pathspec v1.3.0 // indirect
@@ -76,7 +77,7 @@ require (
 	github.com/sigstore/rekor v1.2.2 // indirect
 	github.com/sigstore/sigstore v1.7.2 // indirect
 	github.com/sigstore/timestamp-authority v1.1.2 // indirect
-	github.com/spdx/tools-golang v0.5.2 // indirect
+	github.com/spdx/tools-golang v0.5.3 // indirect
 	github.com/spf13/afero v1.9.5 // indirect
 	github.com/spf13/cast v1.5.1 // indirect
 	github.com/spf13/cobra v1.7.0 // indirect
