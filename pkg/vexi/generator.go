@@ -33,7 +33,7 @@ func (gen *Generator) GenerateImageVEX(imageRef string) error {
 	}
 
 	if len(sboms) == 0 {
-		logrus.Info("No SBOMs found when probing image %s", imageRef)
+		logrus.Infof("No SBOMs found when probing image %s", imageRef)
 		return nil
 	}
 

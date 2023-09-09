@@ -132,6 +132,7 @@ func (dvi *defaultVexiImplementation) ParseSBOM(payloadDoc *payload.Document) (*
 }
 
 func (dvi *defaultVexiImplementation) FilterSBOMPackages(bom *sbom.Document) (*sbom.NodeList, error) {
+	// Fetch all apk nodes from the SBOM
 	nodelist := bom.NodeList.GetNodesByPurlType("apk")
 
 	// Assemble a list of all non-wolfi apks
@@ -140,7 +141,6 @@ func (dvi *defaultVexiImplementation) FilterSBOMPackages(bom *sbom.Document) (*s
 		if !strings.HasPrefix(string(n.Purl()), "pkg:apk/wolfi/") {
 			list = append(list, n.Id)
 		}
-
 	}
 
 	// Remove the nodes
@@ -148,5 +148,9 @@ func (dvi *defaultVexiImplementation) FilterSBOMPackages(bom *sbom.Document) (*s
 
 	// Return the nodelist
 	return nodelist, nil
-
 }
+
+func (dvi *defaultVexiImplementation) FindPackageAdvisories(*sbom.NodeList) (AdvisoryList, error)
+func (dvi *defaultVexiImplementation) GenerateVEXData(AdvisoryList) ([]*vex.VEX, error)
+func (dvi *defaultVexiImplementation) MergeDocuments([]*vex.VEX) (*vex.VEX, error)
+func (dvi *defaultVexiImplementation) WriteVexDocument(*vex.VEX) error
