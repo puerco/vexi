@@ -10,6 +10,8 @@ import (
 	"github.com/puerco/deployer/pkg/payload"
 	"github.com/puerco/vexi/pkg/vexi/options"
 	"github.com/sirupsen/logrus"
+	v2 "github.com/wolfi-dev/wolfictl/pkg/configs/advisory/v2"
+	rwos "github.com/wolfi-dev/wolfictl/pkg/configs/rwfs/os"
 	"sigs.k8s.io/release-sdk/git"
 
 	"github.com/bom-squad/protobom/pkg/reader"
@@ -24,8 +26,8 @@ type generatorImplementation interface {
 	DownloadSBOM(options.Options, string) ([]*payload.Document, error)
 	ParseSBOM(*payload.Document) (*sbom.Document, error)
 	FilterSBOMPackages(*sbom.Document) (*sbom.NodeList, error)
-	FindPackageAdvisories(*sbom.NodeList) (AdvisoryList, error)
-	GenerateVEXData(AdvisoryList) ([]*vex.VEX, error)
+	FindPackageAdvisories(options.Options, *sbom.NodeList) ([]v2.Document, error)
+	GenerateVEXData([]v2.Document) ([]*vex.VEX, error)
 	MergeDocuments([]*vex.VEX) (*vex.VEX, error)
 	WriteVexDocument(*vex.VEX) error
 }
@@ -103,7 +105,7 @@ func (dvi *defaultVexiImplementation) ValidateOptions(opts *options.Options) err
 }
 
 // CloneAdvisoryRepo clones the advisories repository
-func CloneAdvisoryRepo(opts options.Options) error {
+func (dvi *defaultVexiImplementation) CloneAdvisoryRepo(opts options.Options) error {
 	if _, err := git.CloneOrOpenGitHubRepo(
 		opts.AdvisoriesDir, opts.RepoOrg, opts.RepoName, false,
 	); err != nil {
@@ -165,16 +167,25 @@ func (dvi *defaultVexiImplementation) FilterSBOMPackages(bom *sbom.Document) (*s
 	// Remove the nodes
 	nodelist.RemoveNodes(list)
 
-	logrus.Infof("found %d wolfi packages in SBOM", len(nodelist.Nodes))
-
 	// Return the nodelist
 	return nodelist, nil
 }
 
-func (dvi *defaultVexiImplementation) FindPackageAdvisories(*sbom.NodeList) (AdvisoryList, error) {
-	return nil, nil
+func (dvi *defaultVexiImplementation) FindPackageAdvisories(opts options.Options, nodelist *sbom.NodeList) ([]v2.Document, error) {
+	advisoriesFsys := rwos.DirFS(opts.AdvisoriesDir)
+	advisoryCfgs, err := v2.NewIndex(advisoriesFsys)
+	if err != nil {
+		return nil, err
+	}
+
+	var cfgs []v2.Document
+	for _, node := range nodelist.Nodes {
+		cfgs = append(cfgs, advisoryCfgs.Select().WhereName(node.Name).Configurations()...)
+	}
+	return cfgs, nil
 }
-func (dvi *defaultVexiImplementation) GenerateVEXData(AdvisoryList) ([]*vex.VEX, error) {
+
+func (dvi *defaultVexiImplementation) GenerateVEXData([]v2.Document) ([]*vex.VEX, error) {
 	return nil, nil
 }
 func (dvi *defaultVexiImplementation) MergeDocuments([]*vex.VEX) (*vex.VEX, error) {

@@ -15,7 +15,7 @@ type Generator struct {
 func NewGenerator() *Generator {
 	return &Generator{
 		impl:    &defaultVexiImplementation{},
-		Options: options.Options{},
+		Options: options.Default,
 	}
 }
 
@@ -50,12 +50,13 @@ func (gen *Generator) ImageVEX(imageRef string) error {
 		return fmt.Errorf("parsing image SBOM: %w", err)
 	}
 
-	packages, err := gen.impl.FilterSBOMPackages(protobom)
+	nodelist, err := gen.impl.FilterSBOMPackages(protobom)
+	logrus.Info("Found %d wolfi packages in image SBOM", len(nodelist.Nodes))
 	if err != nil {
 		return fmt.Errorf("filtering SBOM packages: %w", err)
 	}
 
-	advisories, err := gen.impl.FindPackageAdvisories(packages)
+	advisories, err := gen.impl.FindPackageAdvisories(gen.Options, nodelist)
 	if err != nil {
 		return fmt.Errorf("")
 	}
