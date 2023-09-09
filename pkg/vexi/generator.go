@@ -2,12 +2,22 @@ package vexi
 
 import (
 	"fmt"
+
+	"github.com/sirupsen/logrus"
 )
 
 type Generator struct {
 	impl generatorImplementation
 	opts Options
 }
+
+func NewGenerator() *Generator {
+	return &Generator{
+		impl: &defaultVexiImplementation{},
+		opts: Options{},
+	}
+}
+
 type Options struct {
 	Platform           string
 	PredicateTypesList string
@@ -17,12 +27,17 @@ type PackageList []string
 type AdvisoryList map[string]string
 
 func (gen *Generator) GenerateImageVEX(imageRef string) error {
-	sbom, err := gen.impl.DownloadSBOM(gen.opts, imageRef)
+	sboms, err := gen.impl.DownloadSBOM(gen.opts, imageRef)
 	if err != nil {
 		return fmt.Errorf("downloading image SBOM: %w", err)
 	}
 
-	protobom, err := gen.impl.ParseSBOM(sbom)
+	if len(sboms) == 0 {
+		logrus.Info("No SBOMs found when probing image %s", imageRef)
+		return nil
+	}
+
+	protobom, err := gen.impl.ParseSBOM(sboms[0])
 	if err != nil {
 		return fmt.Errorf("parsing image SBOM: %w", err)
 	}

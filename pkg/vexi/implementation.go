@@ -17,10 +17,10 @@ import (
 )
 
 type generatorImplementation interface {
-	DownloadSBOM(Options, string) (os.File, error)
-	ParseSBOM(os.File) (*sbom.Document, error)
-	FilterSBOMPackages(*sbom.Document) (PackageList, error)
-	FindPackageAdvisories(PackageList) (AdvisoryList, error)
+	DownloadSBOM(Options, string) ([]*payload.Document, error)
+	ParseSBOM(*payload.Document) (*sbom.Document, error)
+	FilterSBOMPackages(*sbom.Document) (*sbom.NodeList, error)
+	FindPackageAdvisories(*sbom.NodeList) (AdvisoryList, error)
 	GenerateVEXData(AdvisoryList) ([]*vex.VEX, error)
 	MergeDocuments([]*vex.VEX) (*vex.VEX, error)
 	WriteVexDocument(*vex.VEX) error
@@ -129,4 +129,24 @@ func (dvi *defaultVexiImplementation) ParseSBOM(payloadDoc *payload.Document) (*
 	}
 
 	return bom, nil
+}
+
+func (dvi *defaultVexiImplementation) FilterSBOMPackages(bom *sbom.Document) (*sbom.NodeList, error) {
+	nodelist := bom.NodeList.GetNodesByPurlType("apk")
+
+	// Assemble a list of all non-wolfi apks
+	list := []string{}
+	for _, n := range nodelist.Nodes {
+		if !strings.HasPrefix(string(n.Purl()), "pkg:apk/wolfi/") {
+			list = append(list, n.Id)
+		}
+
+	}
+
+	// Remove the nodes
+	nodelist.RemoveNodes(list)
+
+	// Return the nodelist
+	return nodelist, nil
+
 }
