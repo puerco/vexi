@@ -1,0 +1,40 @@
+schema-version: "2"
+
+package:
+  name: gcc-6
+
+advisories:
+  - id: CVE-2018-12886
+    events:
+      - timestamp: 2023-04-28T18:46:17Z
+        type: detection
+        data:
+          type: manual
+      - timestamp: 2023-04-28T19:03:15Z
+        type: true-positive-determination
+        data:
+          note: We are affected.
+
+  - id: CVE-2019-15847
+    events:
+      - timestamp: 2023-04-28T18:46:17Z
+        type: detection
+        data:
+          type: manual
+      - timestamp: 2023-04-28T19:00:50Z
+        type: false-positive-determination
+        data:
+          type: vulnerable-code-not-included-in-package
+          note: We don't support POWER.
+
+  - id: CVE-2021-37322
+    events:
+      - timestamp: 2023-04-28T18:46:17Z
+        type: detection
+        data:
+          type: manual
+      - timestamp: 2023-04-28T19:02:29Z
+        type: false-positive-determination
+        data:
+          type: vulnerable-code-not-in-execution-path
+          note: GCC doesn't use the vulnerable code path in libiberty.
