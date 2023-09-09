@@ -109,7 +109,10 @@ func (dvi *defaultVexiImplementation) CloneAdvisoryRepo(opts options.Options) er
 	if _, err := git.CloneOrOpenGitHubRepo(
 		opts.AdvisoriesDir, opts.RepoOrg, opts.RepoName, false,
 	); err != nil {
-		return fmt.Errorf("cloning repository: %w", err)
+		return fmt.Errorf(
+			"cloning repository %s/%s to %s: %w",
+			opts.RepoOrg, opts.RepoName, opts.AdvisoriesDir, err,
+		)
 	}
 	return nil
 }

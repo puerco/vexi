@@ -24,6 +24,9 @@ var Default = Options{
 	RepoName: "advisories",
 }
 
+// Validate checks an options set to ensure it is sound. If the advisories
+// directory is emtpy, it will create a temporary one to clone the wolfi
+// repository into it.
 func (opts *Options) Validate() error {
 	var dirErr, repoErr, orgErr error
 	if opts.AdvisoriesDir == "" {
@@ -31,6 +34,7 @@ func (opts *Options) Validate() error {
 		if err != nil {
 			dirErr = fmt.Errorf("creating temporary advisories dir: %w", err)
 		}
+		os.Remove(tmp)
 		opts.AdvisoriesDir = tmp
 		opts.IsTempDir = true
 		logrus.Debugf("advisories will be cloned to %s", tmp)
