@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	purl "github.com/package-url/packageurl-go"
 	"github.com/puerco/deployer/pkg/deploy"
 	"github.com/puerco/deployer/pkg/payload"
 	"github.com/puerco/vexi/pkg/convert"
@@ -18,7 +17,6 @@ import (
 
 	"github.com/bom-squad/protobom/pkg/reader"
 	"github.com/bom-squad/protobom/pkg/sbom"
-	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/openvex/go-vex/pkg/vex"
 )
 
@@ -29,77 +27,12 @@ type generatorImplementation interface {
 	ParseSBOM(*payload.Document) (*sbom.Document, error)
 	FilterSBOMPackages(*sbom.Document) (*sbom.NodeList, error)
 	FindPackageAdvisories(options.Options, *sbom.NodeList) ([]v2.Document, error)
-	GenerateVEXData([]v2.Document) ([]*vex.VEX, error)
+	GenerateVEXData(options.Options, []v2.Document) ([]*vex.VEX, error)
 	MergeDocuments([]*vex.VEX) (*vex.VEX, error)
-	WriteVexDocument(*vex.VEX) error
+	WriteVexDocument(options.Options, *vex.VEX) error
 }
 
 type defaultVexiImplementation struct{}
-
-// purlFromRef returns a purl capturing the image reference
-func purlFromRef(imageRef string) (string, error) {
-	ref, err := name.ParseReference(imageRef)
-	if err != nil {
-		return "", fmt.Errorf("parsing image reference: %w", err)
-	}
-
-	digestVersion := ""
-
-	if digest, ok := ref.(name.Digest); ok {
-		digestVersion = digest.DigestStr()
-	}
-
-	qMap := map[string]string{}
-
-	tag, ok := ref.(name.Tag)
-	tagString := ""
-	if ok {
-		tagString = tag.TagStr()
-		// If the tag is latest, then make sure it is in the original
-		// reference string. Do not add it to the purl if it was inferred
-		if tagString == "latest" {
-			if !strings.HasSuffix(imageRef, ":latest") && !strings.Contains(imageRef, ":latest@") {
-				tagString = ""
-			}
-		}
-	}
-
-	if tagString != "" {
-		qMap["tag"] = tagString
-	}
-
-	parts := strings.Split(ref.Context().Name(), "/")
-	name := parts[len(parts)-1]
-
-	repoURL := ""
-	if len(parts) > 1 {
-		repoURL = strings.Join(parts[0:len(parts)-1], "/")
-		if parts[0] == "index.docker.io" {
-			if !strings.Contains(imageRef, "index.docker.io/library") {
-				repoURL = ""
-			}
-		}
-	}
-
-	if repoURL != "" {
-		qMap["repository_url"] = repoURL
-	}
-
-	p := purl.NewPackageURL(
-		purl.TypeOCI,  // Always set to "oci"
-		"",            // OCI purls don't have a namespace
-		name,          // Name of the image, no slashes
-		digestVersion, // We only add the digest as version if it was set in the original string
-		purl.QualifiersFromMap(qMap),
-		"",
-	)
-
-	purlString := p.ToString()
-
-	// This is a bug in the purl go implementation:
-	purlString = strings.ReplaceAll(purlString, "@sha256:", "@sha256%3A")
-	return purlString, nil
-}
 
 // ValidateOptions calls the options validation function.
 func (dvi *defaultVexiImplementation) ValidateOptions(opts *options.Options) error {
@@ -124,17 +57,9 @@ func (dvi *defaultVexiImplementation) DownloadSBOM(opts options.Options, imageRe
 	// Use the mighty deployer to drop any SBOMs from the image to vexi
 	probe := deploy.NewProbe()
 
-	probe.Options.Formats = payload.FormatsList{
-		payload.Format("text/spdx"),
-		payload.Format("application/vnd.cyclonedx"),
-	}
+	probe.Options.Formats = opts.PredicateTypesList
 
-	purlString, err := purlFromRef(imageRef)
-	if err != nil {
-		return nil, fmt.Errorf("translating image reference to package URL: %w", err)
-	}
-
-	docs, err := probe.Fetch(purlString)
+	docs, err := probe.Fetch(opts.ImagePurl)
 	if err != nil {
 		fmt.Fprintf(os.Stdout, "fetching documents: %s\n", err)
 		os.Exit(1)
@@ -191,7 +116,7 @@ func (dvi *defaultVexiImplementation) FindPackageAdvisories(opts options.Options
 }
 
 // GenerateVEXData reads the avisroy data and transforms it into OpenVEX
-func (dvi *defaultVexiImplementation) GenerateVEXData(documents []v2.Document) ([]*vex.VEX, error) {
+func (dvi *defaultVexiImplementation) GenerateVEXData(opts options.Options, documents []v2.Document) ([]*vex.VEX, error) {
 	vexDocuments := []*vex.VEX{}
 	vexDoc := vex.New()
 	for _, d := range documents {
@@ -212,22 +137,29 @@ func (dvi *defaultVexiImplementation) GenerateVEXData(documents []v2.Document) (
 				}
 
 				t := time.Time(evt.Timestamp)
-				purlString := fmt.Sprintf("pkg:apk/wolfi/%s", d.Package.Name)
+				packagePurl := fmt.Sprintf("pkg:apk/wolfi/%s", d.Package.Name)
 
 				vexStatement := vex.Statement{
-					// ID:            "",
-					Vulnerability: vex.Vulnerability{ID: adv.ID},
+					Vulnerability: vex.Vulnerability{Name: vex.VulnerabilityID(adv.ID)},
 					Timestamp:     &t,
 					Products: []vex.Product{
 						{
 							Component: vex.Component{
-								ID: d.Package.Name,
-								// Hashes: map[vex.Algorithm]vex.Hash{},
+								ID: opts.ImagePurl,
 								Identifiers: map[vex.IdentifierType]string{
-									vex.PURL: purlString,
+									vex.PURL: opts.ImagePurl,
 								},
 							},
-							Subcomponents: []vex.Subcomponent{},
+							Subcomponents: []vex.Subcomponent{
+								{
+									Component: vex.Component{
+										ID: packagePurl,
+										Identifiers: map[vex.IdentifierType]string{
+											vex.PURL: packagePurl,
+										},
+									},
+								},
+							},
 						},
 					},
 					Status:          status,
@@ -244,9 +176,27 @@ func (dvi *defaultVexiImplementation) GenerateVEXData(documents []v2.Document) (
 	}
 	return vexDocuments, nil
 }
-func (dvi *defaultVexiImplementation) MergeDocuments([]*vex.VEX) (*vex.VEX, error) {
-	return nil, nil
+
+// MergeDocuments combines the documents generated from the packages into a single one.
+func (dvi *defaultVexiImplementation) MergeDocuments(vexDocuments []*vex.VEX) (*vex.VEX, error) {
+	doc, err := vex.MergeDocuments(vexDocuments)
+	if err != nil {
+		return nil, fmt.Errorf("merging vex data: %w", err)
+	}
+	return doc, nil
 }
-func (dvi *defaultVexiImplementation) WriteVexDocument(*vex.VEX) error {
+
+// WriteVexDocument dumps the vex data to the user specified file or STDOUT.
+func (dvi *defaultVexiImplementation) WriteVexDocument(opts options.Options, doc *vex.VEX) (err error) {
+	f := os.Stdout
+	if opts.OutFile != "" {
+		f, err = os.Create(opts.OutFile)
+		if err != nil {
+			return fmt.Errorf("opening file for writing: %w", err)
+		}
+	}
+	if err := doc.ToJSON(f); err != nil {
+		return fmt.Errorf("rendering JSON to file %w", err)
+	}
 	return nil
 }

@@ -23,6 +23,8 @@ type PackageList []string
 type AdvisoryList map[string]string
 
 func (gen *Generator) ImageVEX(imageRef string) error {
+	gen.Options.ImageReference = imageRef
+
 	if err := gen.impl.ValidateOptions(&gen.Options); err != nil {
 		return fmt.Errorf("invalid options: %w", err)
 	}
@@ -62,7 +64,7 @@ func (gen *Generator) ImageVEX(imageRef string) error {
 	}
 	logrus.Infof("Found %d package advisories", len(advisories))
 
-	vexDocuments, err := gen.impl.GenerateVEXData(advisories)
+	vexDocuments, err := gen.impl.GenerateVEXData(gen.Options, advisories)
 	if err != nil {
 		return fmt.Errorf("generating VEX data: %w", err)
 	}

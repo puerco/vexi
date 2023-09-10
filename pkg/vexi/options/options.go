@@ -75,7 +75,7 @@ func (opts *Options) Validate() error {
 	}
 
 	// Generate and store the image purl equivalent
-	purlString, purlErr := convert.PurlFromRef(opts.ImagePurl)
+	purlString, purlErr := convert.PurlFromRef(opts.ImageReference)
 	opts.ImagePurl = purlString
 
 	if opts.RepoName == "" {

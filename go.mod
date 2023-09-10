@@ -14,6 +14,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/wolfi-dev/wolfictl v0.2.0
 	sigs.k8s.io/release-sdk v0.10.3
+	sigs.k8s.io/release-utils v0.7.5-0.20230707140704-1bf6b4c5d954
 )
 
 require (
@@ -139,5 +140,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gotest.tools/v3 v3.1.0 // indirect
 	k8s.io/klog/v2 v2.100.1 // indirect
-	sigs.k8s.io/release-utils v0.7.5-0.20230707140704-1bf6b4c5d954 // indirect
 )
