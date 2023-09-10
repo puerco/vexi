@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	purl "github.com/package-url/packageurl-go"
 	"github.com/puerco/deployer/pkg/deploy"
 	"github.com/puerco/deployer/pkg/payload"
+	"github.com/puerco/vexi/pkg/convert"
 	"github.com/puerco/vexi/pkg/vexi/options"
 	"github.com/sirupsen/logrus"
 	v2 "github.com/wolfi-dev/wolfictl/pkg/configs/advisory/v2"
@@ -188,8 +190,59 @@ func (dvi *defaultVexiImplementation) FindPackageAdvisories(opts options.Options
 	return cfgs, nil
 }
 
-func (dvi *defaultVexiImplementation) GenerateVEXData([]v2.Document) ([]*vex.VEX, error) {
-	return nil, nil
+// GenerateVEXData reads the avisroy data and transforms it into OpenVEX
+func (dvi *defaultVexiImplementation) GenerateVEXData(documents []v2.Document) ([]*vex.VEX, error) {
+	vexDocuments := []*vex.VEX{}
+	vexDoc := vex.New()
+	for _, d := range documents {
+		for _, adv := range d.Advisories {
+			if len(adv.Events) == 0 {
+				continue
+			}
+
+			// Cycle the advisory events
+			sorted := adv.SortedEvents()
+			for _, evt := range sorted {
+				// Get the vex status. We only handle the event types that
+				// correspond to VEX statuses
+				status := convert.EventToVEXStatus(evt)
+				if status == "" {
+					logrus.Debugf("Skiping event of type %s", evt.Type)
+					continue
+				}
+
+				t := time.Time(evt.Timestamp)
+				purlString := fmt.Sprintf("pkg:apk/wolfi/%s", d.Package.Name)
+
+				vexStatement := vex.Statement{
+					// ID:            "",
+					Vulnerability: vex.Vulnerability{ID: adv.ID},
+					Timestamp:     &t,
+					Products: []vex.Product{
+						{
+							Component: vex.Component{
+								ID: d.Package.Name,
+								// Hashes: map[vex.Algorithm]vex.Hash{},
+								Identifiers: map[vex.IdentifierType]string{
+									vex.PURL: purlString,
+								},
+							},
+							Subcomponents: []vex.Subcomponent{},
+						},
+					},
+					Status:          status,
+					StatusNotes:     "",
+					Justification:   "",
+					ImpactStatement: "",
+					//ActionStatement: "",
+				}
+
+				vexDoc.Statements = append(vexDoc.Statements, vexStatement)
+			}
+		}
+		vexDocuments = append(vexDocuments, &vexDoc)
+	}
+	return vexDocuments, nil
 }
 func (dvi *defaultVexiImplementation) MergeDocuments([]*vex.VEX) (*vex.VEX, error) {
 	return nil, nil

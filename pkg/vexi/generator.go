@@ -51,20 +51,22 @@ func (gen *Generator) ImageVEX(imageRef string) error {
 	}
 
 	nodelist, err := gen.impl.FilterSBOMPackages(protobom)
-	logrus.Info("Found %d wolfi packages in image SBOM", len(nodelist.Nodes))
 	if err != nil {
 		return fmt.Errorf("filtering SBOM packages: %w", err)
 	}
+	logrus.Infof("Found %d wolfi packages in image SBOM", len(nodelist.Nodes))
 
 	advisories, err := gen.impl.FindPackageAdvisories(gen.Options, nodelist)
 	if err != nil {
-		return fmt.Errorf("")
+		return fmt.Errorf("searching advisory data: %w", err)
 	}
+	logrus.Infof("Found %d package advisories", len(advisories))
 
 	vexDocuments, err := gen.impl.GenerateVEXData(advisories)
 	if err != nil {
 		return fmt.Errorf("generating VEX data: %w", err)
 	}
+	logrus.Infof("Built %d OpenVEX documents from advisories", len(vexDocuments))
 
 	vexDocument, err := gen.impl.MergeDocuments(vexDocuments)
 	if err != nil {
