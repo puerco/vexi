@@ -73,7 +73,7 @@ func (gen *Generator) ImageVEX(imageRef string) error {
 		return fmt.Errorf("merging VEX documents: %w", err)
 	}
 
-	if err := gen.impl.WriteVexDocument(vexDocument); err != nil {
+	if err := gen.impl.WriteVexDocument(gen.Options, vexDocument); err != nil {
 		return fmt.Errorf("writing vex doc to stream: %w", err)
 	}
 	return nil
