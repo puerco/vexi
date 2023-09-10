@@ -11,6 +11,7 @@ require (
 	github.com/package-url/packageurl-go v0.1.2-0.20230717211154-3587d8c2829e
 	github.com/puerco/deployer v0.0.0-20230909035803-39960874a7ea
 	github.com/sirupsen/logrus v1.9.3
+	github.com/spf13/cobra v1.7.0
 	github.com/stretchr/testify v1.8.4
 	github.com/wolfi-dev/wolfictl v0.2.0
 	sigs.k8s.io/release-sdk v0.10.3
@@ -106,7 +107,6 @@ require (
 	github.com/spdx/tools-golang v0.5.3 // indirect
 	github.com/spf13/afero v1.9.5 // indirect
 	github.com/spf13/cast v1.5.1 // indirect
-	github.com/spf13/cobra v1.7.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.16.0 // indirect
