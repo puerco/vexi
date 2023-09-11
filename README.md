@@ -22,7 +22,7 @@ or [Anchore's Grype](https://anchore.com/opensource/).
 To generate VEX data simply run `vexi generate` and point to a container image:
 
 ```
-go run .  generate cgr.dev/chainguard/node@sha256:3afbc808e0fe2af41f9183915f19d843c6b7e9ae3aa321f4bd9bbc1145172927
+vexi generate cgr.dev/chainguard/node@sha256:3afbc808e0fe2af41f9183915f19d843c6b7e9ae3aa321f4bd9bbc1145172927
 INFO[0000] cloning advisory data...                     
 WARN[0005] ignoring attached document of type https://slsa.dev/provenance/v1 
 WARN[0005] ignoring attached document of unsupported type https://apko.dev/image-configuration 
