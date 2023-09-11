@@ -8,6 +8,7 @@ import (
 	"github.com/puerco/deployer/pkg/payload"
 	"github.com/puerco/vexi/pkg/convert"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 	"sigs.k8s.io/release-utils/util"
 )
 
@@ -25,7 +26,7 @@ type Options struct {
 
 	// PredicateTypesList List of predicates to consider when fetching attached documents
 	// from the registry. By default, vexi will look for SPDX/CycloneDX documents only.
-	PredicateTypesList []payload.Format
+	PredicateTypesList []string
 
 	// Directory to look for advisory data. If left blank, the repository will
 	// be cloned to a temporary directory.
@@ -43,14 +44,33 @@ type Options struct {
 	// Outfile is the path to a file to sotre the resulting OpenVEX document.
 	// is left blank, it will be output to STDOUT.
 	OutFile string
+
+	// Slug
+	repoSlug string
+}
+
+// PredicateTypeFormats returns simple text labels that represent the SBOM types
+// that are more suitable to use in flags.
+func (opts *Options) PredicateTypeFormats() []payload.Format {
+	ret := []payload.Format{}
+	for _, pt := range opts.PredicateTypesList {
+		switch pt {
+		case "spdx":
+			ret = append(ret, payload.Format("text/spdx"))
+		case "cyclonedx":
+			ret = append(ret, payload.Format("application/vnd.cyclonedx"))
+		default:
+			ret = append(ret, payload.Format(pt))
+		}
+	}
+	return ret
 }
 
 var Default = Options{
 	RepoOrg:  "wolfi-dev",
 	RepoName: "advisories",
-	PredicateTypesList: []payload.Format{
-		payload.Format("text/spdx"),
-		payload.Format("application/vnd.cyclonedx"),
+	PredicateTypesList: []string{
+		"spdx", "cyclonedx",
 	},
 }
 
@@ -87,5 +107,28 @@ func (opts *Options) Validate() error {
 	}
 	return errors.Join(
 		dirErr, repoErr, orgErr, purlErr,
+	)
+}
+
+// AddGenerateOptions
+func (opts *Options) AddFlags(cmd *cobra.Command) {
+	cmd.PersistentFlags().StringSliceVarP(
+		&opts.PredicateTypesList, "predicates", "p", Default.PredicateTypesList,
+		"list of predicate types to download from registry",
+	)
+
+	cmd.PersistentFlags().StringVarP(
+		&opts.repoSlug, "repository", "r", fmt.Sprintf("%s/%s", Default.RepoOrg, Default.RepoName),
+		"repository slug where the advisories are stored",
+	)
+
+	cmd.PersistentFlags().StringVarP(
+		&opts.AdvisoriesDir, "advisories", "a", Default.AdvisoriesDir,
+		"directory holding the advisories (prevents cloning the advisory repository)",
+	)
+
+	cmd.PersistentFlags().StringVarP(
+		&opts.OutFile, "file", "f", "",
+		"file to write the resulting OpenVEX document, defaults to STDOUT",
 	)
 }

@@ -57,7 +57,7 @@ func (dvi *defaultVexiImplementation) DownloadSBOM(opts options.Options, imageRe
 	// Use the mighty deployer to drop any SBOMs from the image to vexi
 	probe := deploy.NewProbe()
 
-	probe.Options.Formats = opts.PredicateTypesList
+	probe.Options.Formats = opts.PredicateTypeFormats()
 
 	docs, err := probe.Fetch(opts.ImagePurl)
 	if err != nil {

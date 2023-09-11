@@ -1,14 +1,16 @@
 package main
 
 import (
-	"github.com/puerco/vexi/pkg/vexi"
+	"os"
+
+	"github.com/puerco/vexi/internal/cli"
 	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	generator := vexi.NewGenerator()
-	err := generator.ImageVEX("cgr.dev/chainguard/curl@sha256:fa5292b1973e8a6b57fd9e7809526d7484dc37749ecff1402e6493d797ed3e24")
+	err := cli.Execute()
 	if err != nil {
-		logrus.Fatalf("generating image VEX: %s", err)
+		logrus.Fatal(err)
+		os.Exit(1)
 	}
 }
